@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<!--
+MY-BASIC Playground
+Copyright (C) 2011 - 2018 Wang Renxin
+Learn more: https://github.com/paladin-t/my_basic
+-->
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>MY-BASIC Playground</title>
+		<style type="text/css">
+			body {
+				margin: 0; padding: 0;
+				background-color: #789;
+				font: 14px Helvetica, Arial, sans-serif;
+			}
+			textarea {
+				width: 100%; height: 240px;
+				resize: vertical;
+			}
+			#page {
+				width: 600px; margin: 2em auto; padding: 20px 50px;
+				border-radius: 1em;
+				background-color: #fff;
+			}
+			#content {
+				position: relative;
+			}
+			#loading {
+				position: absolute;
+				top: 50%; left: 50%;
+				transform: translateX(-50%) translateY(-50%);
+				z-index: 10;
+			}
+			.spinner {
+				width: 50px; height: 50px; margin: 0px auto;
+				border-left: 10px solid rgb(52,152,219); border-right: 10px solid rgb(52,152,219); border-bottom: 10px solid rgb(52,152,219); border-top: 10px solid rgb(49,109,223);
+				border-radius: 100%;
+				background-color: rgb(119,136,153);
+				-webkit-animation: rotation .8s linear infinite; -moz-animation: rotation .8s linear infinite; -o-animation: rotation .8s linear infinite; animation: rotation 0.8s linear infinite;
+			}
+			@-webkit-keyframes rotation { from { -webkit-transform: rotate(0deg); } to { -webkit-transform: rotate(360deg); } }
+			@-moz-keyframes rotation { from { -moz-transform: rotate(0deg); } to { -moz-transform: rotate(360deg); } }
+			@-o-keyframes rotation { from { -o-transform: rotate(0deg); } to { -o-transform: rotate(360deg); } }
+			@keyframes rotation { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+			.button {
+				background: #3498db;
+				border-radius: 6px;
+				color: #ffffff;
+				font-size: 14px;
+				background: #3498db;
+				padding: 5px 20px 5px 20px;
+				text-decoration: none;
+			}
+			.button:hover {
+				background: #3cb0fd;
+				text-decoration: none;
+			}
+			a:link, a:visited { text-decoration: none; color: #69c; }
+			@media (max-width: 700px) {
+				body { background-color: #fff; }
+				#page {
+					width: auto; margin: 0 auto; padding: 1em;
+					border-radius: 0;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div id="page">
+			<div id="content">
+				<p align="center">
+					Input
+					<br />
+					<textarea id="input" rows="8"></textarea>
+				</p>
+				<p align="center">
+					Output
+					<br />
+					<textarea id="output" rows="8"></textarea>
+				</p>
+				<div id="loading"><figure id="spinner"><div class="spinner" /></figure></div>
+			</div>
+			<div id="controls" style="display: none;">
+				<p align="center">
+					<input id="run" type="button" class="button" value="Run" onclick="Module.doEval();" />
+					<input id="clear" type="button" class="button" value="Clear" onclick="document.getElementById('output').value = '';" />
+				</p>
+			</div>
+			<p align="center">Powered by <a href="https://github.com/paladin-t/my_basic">MY-BASIC</a></p>
+		</div>
+		<script type="text/javascript">
+			var evalProc = undefined;
+			var Module = {
+				canvas: document.getElementById('canvas'),
+				spinner: document.getElementById('spinner'),
+				controls: document.getElementById('controls'),
+				print: (
+					function() {
+						var element = document.getElementById('output');
+						if (element) element.value = '';
+						return function(text) {
+							if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+							console.log(text);
+							if (element) {
+								element.value += text + "\n";
+								element.scrollTop = element.scrollHeight;
+							}
+						};
+					}
+				)(),
+				setStatus: function(text) {
+					if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
+					if (text === Module.setStatus.text) return;
+					var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+					var now = Date.now();
+					if (m && now - Date.now() < 30) return;
+					if (m) {
+						text = m[1];
+						Module.spinner.hidden = false;
+						Module.controls.style.display = 'none';
+					} else {
+						if (!text) {
+							Module.spinner.hidden = true;
+							Module.controls.style.display = 'block';
+							if (evalProc == undefined) {
+								evalProc = Module.cwrap('eval', 'number', ['string']);
+								Module.print('READY!');
+							}
+						}
+					}
+				},
+				doEval: function () {
+					if (evalProc == undefined) {
+						Module.print('Not ready yet.');
+
+						return;
+					}
+					var element = document.getElementById('input');
+					var str = element.value;
+					evalProc(str);
+				}
+			};
+			Module.setStatus('Downloading...');
+			window.onerror = function() {
+				Module.setStatus('Exception thrown, see JavaScript console.');
+				Module.spinner.style.display = 'none';
+				Module.setStatus = function(text) { if (text) Module.printErr('[post-exception status] ' + text); };
+			};
+			document.getElementById('input').value =
+				'REM This program is an example of MY-BASIC\n' +
+				'REM For more information, see https://github.com/paladin-t/my_basic/\n' +
+				'\n' +
+				'def greating(name)\n' +
+				'  print "Hello " + name + "!"\n' +
+				'enddef\n' +
+				'\n' +
+				'greating("BASIC")\n';
+
+		</script>
+		<script async type="text/javascript" src="my_basic.js"></script>
+	</body>
+</html>
